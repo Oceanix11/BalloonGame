@@ -117,6 +117,7 @@
 
         function selectRole(selectedRole) {
             role = selectedRole;
+            if(role == 'Deflator') money = 600;
             document.getElementById("role-selection").style.display = "none";
             document.getElementById("game-area").style.display = "block";
             document.getElementById("action-button").innerText = role === "Inflator" ? "Add Money" : "Remove Money";
