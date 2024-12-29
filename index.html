@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balloon Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff;
+        }
+        .balloon {
+            width: 50px;
+            height: 75px;
+            background-color: red;
+            border-radius: 50% 50% 60% 60%;
+            margin: 20px auto;
+            position: relative;
+            transition: width 0.3s, height 0.3s;
+            box-shadow: inset -5px -5px 10px rgba(255, 255, 255, 0.5), 5px 5px 10px rgba(0, 0, 0, 0.2);
+        }
+        .balloon::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background-color: red;
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+        }
+        .string {
+            width: 2px;
+            height: 50px;
+            background-color: black;
+            position: relative;
+            margin: 0 auto;
+            top: -10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .stage {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 18px;
+            background-color: #ddd;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        @keyframes pop {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.5);
+                opacity: 0.7;
+            }
+            100% {
+                transform: scale(0);
+                opacity: 0;
+            }
+        }
+        .pop-animation {
+            animation: pop 0.5s forwards;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to the Balloon Game</h1>
+    <button onclick="showRules()">Rules</button>
+    <div id="role-selection">
+        <p>Select your role:</p>
+        <button onclick="selectRole('Inflator')">Inflator</button>
+        <button onclick="selectRole('Deflator')">Deflator</button>
+    </div>
+    <div id="game-area" style="display:none;">
+        <div class="stage" id="stage-indicator">Stage: Early</div>
+        <div class="balloon" id="balloon"></div>
+        <div class="string"></div>
+        <button id="action-button">Add Money</button>
+    </div>
+    <audio id="pop-sound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+    <script>
+        let role = "";
+        let money = 0;
+        const burstThreshold = Math.floor(Math.random() * 101) + 450; // Random threshold for balloon burst
+
+        function updateStage() {
+            const stage = money < 0.8 * burstThreshold ? "Early" : "Critical";
+            document.getElementById("stage-indicator").innerText = `Stage: ${stage}`;
+        }
+
+        function updateBalloonSize() {
+            const balloon = document.getElementById("balloon");
+            const string = document.querySelector(".string");
+            const maxMoney = 600; // Assumed max size limit
+            const newWidth = Math.min(50 + (money / maxMoney) * 100, 150); // Min width 50px, max 150px
+            const newHeight = Math.min(75 + (money / maxMoney) * 150, 300); // Min height 75px, max 300px
+            const newStringHeight = Math.min(50 + (money / maxMoney) * 50, 100); // String grows with balloon
+            balloon.style.width = `${newWidth}px`;
+            balloon.style.height = `${newHeight}px`;
+            string.style.height = `${newStringHeight}px`;
+        }
+
+        function showRules() {
+            alert(`Rules of the Balloon Game:\n\n- There are two roles: Inflator and Deflator.\n- Inflators add money to the balloon. If the balloon pops, they lose.\n- Deflators remove money from the balloon to prevent it from popping.\n- The balloon pops when the money exceeds a secret random threshold.\n- The stage changes to "Critical" when the balloon's money is close to the threshold.\n- Deflators win if the balloon doesn't pop after a month; otherwise, Inflators win.\n`);
+        }
+
+        function selectRole(selectedRole) {
+            role = selectedRole;
+            document.getElementById("role-selection").style.display = "none";
+            document.getElementById("game-area").style.display = "block";
+            document.getElementById("action-button").innerText = role === "Inflator" ? "Add Money" : "Remove Money";
+            updateStage();
+        }
+
+        function popBalloon() {
+            const balloon = document.getElementById("balloon");
+            const popSound = document.getElementById("pop-sound");
+            balloon.classList.add("pop-animation");
+            popSound.play();
+            setTimeout(() => resetGame(), 500);
+        }
+
+        document.getElementById("action-button").addEventListener("click", function () {
+            const action = role === "Inflator" ? "add" : "remove";
+            const amount = prompt(`Enter the amount of money you want to ${action}:`, "0");
+            const parsedAmount = parseInt(amount);
+
+            if (!isNaN(parsedAmount) && parsedAmount > 0) {
+                if (role === "Inflator") {
+                    money += parsedAmount;
+                } else if (role === "Deflator") {
+                    money -= parsedAmount;
+                }
+
+                updateStage();
+                updateBalloonSize();
+
+                if (money >= burstThreshold) {
+                    popBalloon();
+                } else if (money < 0) {
+                    alert("The balloon deflated completely! Game over.");
+                    resetGame();
+                }
+            } else {
+                alert("Please enter a valid positive number.");
+            }
+        });
+
+        function resetGame() {
+            money = 0;
+            role = "";
+            document.getElementById("role-selection").style.display = "block";
+            document.getElementById("game-area").style.display = "none";
+            const balloon = document.getElementById("balloon");
+            balloon.style.width = "50px";
+            balloon.style.height = "75px";
+            balloon.classList.remove("pop-animation");
+            document.querySelector(".string").style.height = "50px";
+        }
+    </script>
+</body>
+</html>
